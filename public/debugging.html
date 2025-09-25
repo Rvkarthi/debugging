@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Python Debugging Game</title>
+  <!-- Include Brython from CDN -->
+  <script type="text/javascript" src="brython.js"></script>
+  <script type="text/javascript" src="brython_stdlib.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f7fb; margin:0; padding:20px; color:#333; }
+    h1 { text-align:center; color:#4a90e2; }
+    #game-container { max-width:800px; margin:0 auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    #challenge { padding:10px; background:#eef6ff; border-left:5px solid #4a90e2; margin-bottom:20px; }
+    textarea { width:100%; height:80vh; font-family:monospace; font-size:14px; border-radius:8px; border:1px solid #ccc; padding:10px; }
+    button { background:#4a90e2; color:white; padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:16px; margin-top:10px; }
+    button:hover { background:#357ab8; }
+    pre { background:#272822; color:#f8f8f2; padding:15px; border-radius:8px; margin-top:20px; white-space:pre-wrap; word-wrap:break-word; min-height:60px; }
+    .success { color: lightgreen; }
+    .error { color: red; }
+  </style>
+</head>
+<body onload="brython()">
+
+  <h1>🐍 Python Debugging Game</h1>
+  <div id="game-container">
+    <div id="challenge">
+      <strong>Challenge:</strong>  
+      The following code is broken. Fix it so it prints the sum of numbers from 1 to 5.  
+    </div>
+
+    <textarea id="code"># Broken code
+total = 0
+for i in range(1, 5)
+    total += i
+print("Sum is:", total)</textarea>
+
+    <button id="run">Run Code</button>
+
+    <h3>Output:</h3>
+    <pre id="output"></pre>
+  </div>
+
+  <script type="text/python">
+from browser import document
+import sys
+
+class OutputCatcher:
+    def write(self, data):
+        if data.strip():
+            document["output"].text += data + "\n"
+    def flush(self):
+        pass
+
+sys.stdout = OutputCatcher()
+sys.stderr = OutputCatcher()
+
+def run_code(event):
+    out = document["output"]
+    out.text = ""  # clear previous output
+    code = document["code"].value
+    try:
+        exec(code, {})
+    except Exception as e:
+        out.text = f"❌ Error: {e}"
+        out.className = "error"
+    else:
+        out.className = "success"
+
+document["run"].bind("click", run_code)
+  </script>
+
+</body>
+</html>

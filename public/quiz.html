@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Quiz</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; text-align: center; background-color: #f4f7f6; color: #333; }
+        #quiz-container, #result-container { max-width: 600px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #question-header { display: flex; justify-content: space-between; align-items: center; }
+        #options label { display: block; margin: 10px auto; width: 80%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; background-color: #fff; cursor: pointer; text-align: left; }
+        #options label:hover { background-color: #e8f4f8; }
+        #options input[type="radio"] { margin-right: 10px; }
+        #navigation-controls { margin-top: 20px; display: flex; justify-content: space-between; }
+        #navigation-controls button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; background-color: #3498db; color: white; font-size: 1em; }
+        #submit-btn { background-color: #27ae60; }
+        #goToDebugBtn { background-color: #f39c12; margin-top: 20px; }
+        #timer { font-size: 1.5em; font-weight: bold; color: #d35400; }
+        #feedback-message { font-size: 1.2em; line-height: 1.6; }
+        #goToDebugBtn{ display: none;}
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <div id="question-header">
+            <h3 id="question-counter"></h3>
+            <div id="timer">15:00</div>
+        </div>
+        <hr>
+        <h3 id="question">Loading questions...</h3>
+        <div id="options"></div>
+        <div id="navigation-controls">
+            <button id="prev-btn" style="display: none;">Previous</button>
+            <button id="next-btn" style="display: none;">Next</button>
+            <button id="submit-btn" style="display: none;">Submit Quiz</button>
+        </div>
+    </div>
+
+    <div id="result-container" style="display:none;">
+        <h2>Quiz Submitted!</h2>
+        <p id="feedback-message">Thank you for completing the quiz. Your results have been recorded.</p>
+        <button id="goToDebugBtn">Go to Debugging Round</button>
+    </div>
+
+
+    <script>
+    // --- DOM Elements ---
+    const questionElement = document.getElementById('question');
+    const questionCounterElement = document.getElementById('question-counter');
+    const optionsElement = document.getElementById('options');
+    const quizContainer = document.getElementById('quiz-container');
+    const resultContainer = document.getElementById('result-container');
+    const feedbackMessage = document.getElementById('feedback-message');
+    const timerElement = document.getElementById('timer');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const goToDebugBtn = document.getElementById('goToDebugBtn'); // New button
+
+    // --- State Variables ---
+    let quizQuestions = [];
+    let userAnswers = [];
+    let currentQuestionIndex = 0;
+    let timer;
+    let quizTimeout;
+
+    // --- Main Function to Start the Quiz ---
+    async function startQuiz() {
+        const username = localStorage.getItem('username');
+        if (!username) {
+            quizContainer.innerHTML = '<h2>Error</h2><p>You must be logged in to start the quiz.</p>';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/questions');
+            quizQuestions = await response.json();
+            if (quizQuestions.length === 0) {
+                questionElement.textContent = "No questions available.";
+                return;
+            }
+            userAnswers = new Array(quizQuestions.length).fill(null);
+            startTimer();
+            loadQuestion();
+        } catch (error) {
+            questionElement.textContent = "Failed to load quiz.";
+        }
+    }
+
+    // --- Timer Logic ---
+    function startTimer() {
+        let duration = 15 * 60; // 15 minutes
+        quizTimeout = setTimeout(submitQuiz, duration * 1000);
+        timer = setInterval(() => {
+            duration--;
+            let minutes = parseInt(duration / 60, 10);
+            let seconds = parseInt(duration % 60, 10);
+            timerElement.textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            if (duration <= 0) clearInterval(timer);
+        }, 1000);
+    }
+
+    // --- Question Loading and Navigation Logic ---
+    function loadQuestion() {
+        const currentQuestion = quizQuestions[currentQuestionIndex];
+        questionElement.textContent = currentQuestion.question;
+        questionCounterElement.textContent = `Question ${currentQuestionIndex + 1} of ${quizQuestions.length}`;
+        optionsElement.innerHTML = '';
+
+        currentQuestion.options.forEach((option, index) => {
+            const isChecked = userAnswers[currentQuestionIndex] === index;
+            optionsElement.innerHTML += `
+                <label>
+                    <input type="radio" name="option" value="${index}" ${isChecked ? 'checked' : ''}>
+                    ${option}
+                </label>
+            `;
+        });
+        updateNavigationButtons();
+    }
+
+    function updateNavigationButtons() {
+        prevBtn.style.display = currentQuestionIndex > 0 ? 'block' : 'none';
+        nextBtn.style.display = currentQuestionIndex < quizQuestions.length - 1 ? 'block' : 'none';
+        submitBtn.style.display = currentQuestionIndex === quizQuestions.length - 1 ? 'block' : 'none';
+    }
+
+    // --- Event Listeners ---
+    optionsElement.addEventListener('change', (event) => {
+        if (event.target.name === 'option') {
+            userAnswers[currentQuestionIndex] = parseInt(event.target.value, 10);
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (currentQuestionIndex < quizQuestions.length - 1) {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            loadQuestion();
+        }
+    });
+
+    submitBtn.addEventListener('click', submitQuiz);
+    
+    // ✅ Event listener for the new button on the results page
+    goToDebugBtn.addEventListener('click', () => {
+        window.location.href = '/debug';
+    });
+
+
+    // --- Score Calculation and Submission ---
+    async function submitQuiz() {
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        
+        clearTimeout(quizTimeout);
+        clearInterval(timer);
+
+        let score = 0;
+        for (let i = 0; i < quizQuestions.length; i++) {
+            if (userAnswers[i] === quizQuestions[i].correctOptionIndex) {
+                score++;
+            }
+        }
+
+        try {
+            const username = localStorage.getItem('username');
+            await fetch('/score/scoreUpdate', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, score: score })
+            });
+        } catch (error) {
+            console.error('Error updating score:', error);
+        }
+        
+        quizContainer.style.display = 'none';
+        resultContainer.style.display = 'block'; // Show the results container
+    }
+
+    // --- Initialize the Quiz ---
+    startQuiz();
+    </script>
+</body>
+</html>

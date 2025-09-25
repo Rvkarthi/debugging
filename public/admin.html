@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        :root { --primary-color: #3498db; --danger-color: #e74c3c; --edit-color: #f39c12; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        h1, h2, h3 { color: #2c3e50; text-align: center; }
+        main { max-width: 900px; margin: 20px auto; padding: 20px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 8px; }
+        nav { background-color: #34495e; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 20px; }
+        nav a { color: white; margin: 0 15px; text-decoration: none; font-size: 1.1em; cursor: pointer; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s; }
+        nav a:hover, nav a.active { background-color: var(--primary-color); }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        form { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        input[type="text"], input[type="password"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button, .btn { padding: 12px; border: none; color: white; font-size: 1em; cursor: pointer; border-radius: 4px; transition: background-color 0.3s; }
+        button { background-color: var(--primary-color); }
+        .btn-delete { background-color: var(--danger-color); font-size: 0.9em; padding: 5px 10px; }
+        .btn-edit { background-color: var(--edit-color); font-size: 0.9em; padding: 5px 10px; margin-right: 5px; }
+        .management-section { margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; word-break: break-all; }
+        thead { background-color: #ecf0f1; color: #333; }
+        .question-list-container { display: flex; flex-direction: column; gap: 10px; }
+        .question-item { background: #f9f9f9; border: 1px solid #eee; border-radius: 5px; padding: 15px; }
+        .question-item p { margin: 0 0 10px 0; font-weight: bold; }
+        .question-item ol { margin: 0; padding-left: 20px; }
+        .question-item .correct { color: #27ae60; font-weight: bold; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .status { text-align: center; margin-top: 20px; font-style: italic; color: #27ae60; }
+    </style>
+</head>
+<body>
+    <h1>Admin Control Panel</h1>
+    <nav>
+        <a href="#" class="nav-link active" data-target="users-section">👤 User Management</a>
+        <a href="#" class="nav-link" data-target="questions-section">❓ Question Management</a>
+        <a href="#" class="nav-link" data-target="scoreboard-section">🏆 Live Scoreboard</a>
+    </nav>
+    <main>
+        <section id="users-section" class="content-section active">
+            <h3>Create New User</h3>
+            <form id="createUserForm">
+                <input type="text" id="username" placeholder="Username" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit">Create User</button>
+            </form>
+            <p id="userStatus" class="status"></p>
+
+            <div class="management-section">
+                <h3>Manage Existing Users</h3>
+                <table id="user-table">
+                    <thead><tr><th>Username</th><th>Password</th><th>Score</th><th>Actions</th></tr></thead>
+                    <tbody id="user-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+        
+        <section id="questions-section" class="content-section">
+            <h3>Add New Quiz Question</h3>
+            <form id="addQuestionForm">
+                <input type="text" id="questionText" placeholder="Enter the question" required>
+                <label>Options (select the correct one):</label>
+                <div><input type="radio" name="correctAnswer" value="0" checked> <input type="text" class="option-input" placeholder="Option 1" required></div>
+                <div><input type="radio" name="correctAnswer" value="1"> <input type="text" class="option-input" placeholder="Option 2" required></div>
+                <div><input type="radio" name="correctAnswer" value="2"> <input type="text" class="option-input" placeholder="Option 3" required></div>
+                <div><input type="radio" name="correctAnswer" value="3"> <input type="text" class="option-input" placeholder="Option 4" required></div>
+                <button type="submit">Add Question</button>
+            </form>
+            <p id="questionStatus" class="status"></p>
+            <div class="management-section">
+                <h3>Manage Existing Questions</h3>
+                <div id="question-list-container"></div>
+            </div>
+        </section>
+
+        <section id="scoreboard-section" class="content-section">
+            <h2>🏆 Admin Score Leaderboard (Live) <button onclick="resetScores()">Reset All Scores</button></h2>
+            <table id="leaderboard">
+                <thead><tr><th>Rank</th><th>Username</th><th>Score</th></tr></thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+            <p id="scoreStatus" class="status">Fetching latest scores...</p>
+        </section>
+    </main>
+
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="editUserModal">&times;</span>
+            <h3>Edit User</h3>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserOriginalUsername">
+                <label>New Username:</label>
+                <input type="text" id="editUsername" required>
+                <label>New Password:</label>
+                <input type="password" id="editPassword" placeholder="Enter new password to change" required>
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="editQuestionModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="editQuestionModal">&times;</span>
+            <h3>Edit Question</h3>
+            <form id="editQuestionForm">
+                <input type="hidden" id="editQuestionId">
+                <label>Question Text:</label>
+                <input type="text" id="editQuestionText" required>
+                <label>Options (select the correct one):</label>
+                <div id="editOptionsContainer"></div>
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    // --- GLOBAL STATE & ELEMENTS ---
+    let scoreInterval = null;
+    const navLinks = document.querySelectorAll('.nav-link');
+    const contentSections = document.querySelectorAll('.content-section');
+    const userTableBody = document.getElementById('user-table-body');
+    const questionListContainer = document.getElementById('question-list-container');
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    const scoreStatusElement = document.getElementById('scoreStatus');
+
+    // --- NAVIGATION LOGIC ---
+    navLinks.forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            if (scoreInterval) clearInterval(scoreInterval);
+            const targetId = link.getAttribute('data-target');
+            navLinks.forEach(nav => nav.classList.remove('active'));
+            link.classList.add('active');
+            contentSections.forEach(section => section.classList.remove('active'));
+            document.getElementById(targetId).classList.add('active');
+            if (targetId === 'users-section') fetchAllUsers();
+            if (targetId === 'questions-section') fetchAllQuestions();
+            if (targetId === 'scoreboard-section') {
+                fetchScores();
+                scoreInterval = setInterval(fetchScores, 5000);
+            }
+        });
+    });
+
+    // --- INITIAL DATA FETCH ---
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchAllUsers();
+    });
+
+    // =============================
+    // --- USER MANAGEMENT LOGIC ---
+    // =============================
+    document.getElementById('createUserForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const response = await fetch('/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            })
+        });
+        if (response.ok) { e.target.reset(); fetchAllUsers(); }
+    });
+
+    async function fetchAllUsers() {
+        try {
+            const response = await fetch('/auth/show');
+            const result = await response.json();
+            const users = result.data || result;
+            userTableBody.innerHTML = '';
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.password || 'N/A'}</td>
+                    <td>${user.score !== undefined ? user.score : 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-edit" data-id="${user._id}" data-username="${user.username}">Edit</button>
+                        <button class="btn btn-delete" data-id="${user._id}">Delete</button>
+                    </td>`;
+                userTableBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error("Error fetching users:", error);
+            userTableBody.innerHTML = '<tr><td colspan="4">Failed to load users.</td></tr>';
+        }
+    }
+    
+    userTableBody.addEventListener('click', e => {
+        const target = e.target;
+        if (target.classList.contains('btn-delete')) handleDeleteUser(target.dataset.id);
+        if (target.classList.contains('btn-edit')) openEditUserModal(target.dataset.username);
+    });
+
+    async function handleDeleteUser(userId) {
+        if (!confirm('Are you sure you want to delete this user?')) return;
+        const response = await fetch('/auth/delete-user', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: userId })
+        });
+        if (response.ok) { fetchAllUsers(); }
+    }
+
+    function openEditUserModal(originalUsername) {
+        document.getElementById('editUserOriginalUsername').value = originalUsername;
+        document.getElementById('editUsername').value = originalUsername;
+        document.getElementById('editPassword').value = '';
+        document.getElementById('editUserModal').style.display = 'block';
+    }
+
+    document.getElementById('editUserForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const body = {
+            username: document.getElementById('editUserOriginalUsername').value,
+            newUserName: document.getElementById('editUsername').value,
+            password: document.getElementById('editPassword').value
+        };
+        const response = await fetch('/auth/update-user', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (response.ok) { closeModal('editUserModal'); fetchAllUsers(); }
+    });
+
+    // ===================================
+    // --- QUESTION MANAGEMENT LOGIC ---
+    // ===================================
+    document.getElementById('addQuestionForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const response = await fetch('/api/questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: document.getElementById('questionText').value,
+                options: Array.from(document.querySelectorAll('.option-input')).map(i => i.value),
+                correctOptionIndex: Number(document.querySelector('input[name="correctAnswer"]:checked').value)
+            })
+        });
+        if (response.ok) { e.target.reset(); fetchAllQuestions(); }
+    });
+
+    async function fetchAllQuestions() {
+        try {
+            const response = await fetch('/api/questions');
+            const questions = await response.json();
+            questionListContainer.innerHTML = '';
+            questions.forEach(q => {
+                const item = document.createElement('div');
+                item.className = 'question-item';
+                const optionsHtml = q.options.map((opt, i) => `<li class="${i === q.correctOptionIndex ? 'correct' : ''}">${opt}</li>`).join('');
+                item.innerHTML = `<p>${q.question}</p><ol type="A">${optionsHtml}</ol>
+                    <div><button class="btn btn-edit" data-question-id="${q._id}">Edit</button>
+                    <button class="btn btn-delete" data-question-id="${q._id}">Delete</button></div>`;
+                item.dataset.questionData = JSON.stringify(q);
+                questionListContainer.appendChild(item);
+            });
+        } catch (error) { console.error("Error fetching questions:", error); }
+    }
+
+    questionListContainer.addEventListener('click', e => {
+        const target = e.target;
+        if (target.classList.contains('btn-delete')) handleDeleteQuestion(target.dataset.questionId);
+        if (target.classList.contains('btn-edit')) {
+            const data = JSON.parse(target.closest('.question-item').dataset.questionData);
+            openEditQuestionModal(data);
+        }
+    });
+
+    async function handleDeleteQuestion(questionId) {
+        if (!confirm('Are you sure you want to delete this question?')) return;
+        const response = await fetch(`/api/questions/${questionId}`, { method: 'DELETE' });
+        if (response.ok) fetchAllQuestions();
+    }
+
+    function openEditQuestionModal(question) {
+        document.getElementById('editQuestionId').value = question._id;
+        document.getElementById('editQuestionText').value = question.question;
+        const optsContainer = document.getElementById('editOptionsContainer');
+        optsContainer.innerHTML = '';
+        question.options.forEach((opt, i) => {
+            optsContainer.innerHTML += `<div><input type="radio" name="editCorrectAnswer" value="${i}" ${i === question.correctOptionIndex ? 'checked' : ''}>
+                <input type="text" class="edit-option-input" value="${opt}" required></div>`;
+        });
+        document.getElementById('editQuestionModal').style.display = 'block';
+    }
+
+    document.getElementById('editQuestionForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const id = document.getElementById('editQuestionId').value;
+        const body = {
+            question: document.getElementById('editQuestionText').value,
+            options: Array.from(document.querySelectorAll('.edit-option-input')).map(i => i.value),
+            correctOptionIndex: Number(document.querySelector('input[name="editCorrectAnswer"]:checked').value)
+        };
+        const response = await fetch(`/api/questions/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (response.ok) { closeModal('editQuestionModal'); fetchAllQuestions(); }
+    });
+
+    // =============================
+    // --- SCOREBOARD LOGIC ---
+    // =============================
+    async function fetchScores() {
+        try {
+            const response = await fetch('/score/getscore');
+            const result = await response.json();
+            const scores = result.data || result;
+            if (scores) updateScoreTable(scores);
+        } catch (error) { console.error("Failed to fetch scores:", error); }
+    }
+
+    function updateScoreTable(users) {
+        leaderboardBody.innerHTML = '';
+        const sorted = users.sort((a, b) => b.score - a.score);
+        sorted.forEach((user, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${index + 1}</td><td>${user.username}</td><td>${user.score !== undefined ? user.score : 'N/A'}</td>`;
+            leaderboardBody.appendChild(row);
+        });
+    }
+
+    async function resetScores() {
+        if (!confirm("Are you sure you want to reset ALL user scores to 0?")) return;
+        // Changed to POST as GET should not modify data
+        const response = await fetch('/score/resetscore', { method: 'GET' });
+        if (response.ok) fetchScores();
+    }
+    
+    // --- MODAL CONTROLS ---
+    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+    document.querySelectorAll('.close-btn').forEach(btn => btn.onclick = () => closeModal(btn.dataset.modal));
+    window.onclick = event => { if (event.target.classList.contains('modal')) closeModal(event.target.id); };
+    </script>
+</body>
+</html>

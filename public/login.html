@@ -1,0 +1,46 @@
+<form id="loginForm">
+  <input type="text" id="name" placeholder="username" required>
+  <input type="password" id="password" placeholder="Password" required>
+  <button type="submit">Login</button>
+</form>
+<p id="errorMessage"></p>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const errorMessage = document.getElementById('errorMessage');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault(); // Prevent the form from reloading the page
+
+    
+    const name = document.getElementById('name').value.trim();
+    const password = document.getElementById('password').value;
+    if(name === "admin" && password=== "admin987")
+      window.location.href = '/admin'
+
+    else{
+      try {
+      const response = await fetch('/auth/login', { // This calls your API endpoint
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ "username": name, password })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('username', name);
+        // Login successful! Redirect to the quiz page.
+        window.location.href = '/quiz'; // Redirects the browser
+      } else {
+        // Show an error message from the server
+        errorMessage.textContent = result.message || 'Login failed!';
+      }
+    } catch (error) {
+      errorMessage.textContent = 'An error occurred. Please try again.';
+    }
+    }
+  });
+</script>

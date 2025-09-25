@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User List</title>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            color: #333;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        h1 {
+            color: #0056b3;
+        }
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse; /* Removes space between borders */
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        thead th {
+            background-color: #0056b3;
+            color: #fff;
+        }
+        tbody tr:nth-of-type(even) {
+            background-color: #f9f9f9; /* Zebra striping for readability */
+        }
+        tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .status-redacted {
+            color: #c0392b;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>User Data from API</h1>
+        <p>The user data fetched from your local API is displayed in the table below.</p>
+    </header>
+
+    <main>
+        <table id="user-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Password Status</th>
+                </tr>
+            </thead>
+            <tbody id="user-table-body">
+                </tbody>
+        </table>
+    </main>
+
+    <script>
+        // The URL for your local API endpoint
+        const apiUrl = 'http://localhost:2222/auth/show';
+        
+        // Get a reference to the table body where we will insert the rows
+        const tableBody = document.getElementById('user-table-body');
+
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === "true" && Array.isArray(data.data)) {
+                    // Loop through each user in the data array
+                    data.data.forEach(user => {
+                        // 1. Create a new table row element
+                        const row = document.createElement('tr');
+
+                        // 2. Create the cell for the username
+                        const usernameCell = document.createElement('td');
+                        usernameCell.textContent = user.username;
+                        row.appendChild(usernameCell);
+
+                        // 3. Create the cell for the password status (redacted)
+                        const passwordCell = document.createElement('td');
+                        passwordCell.textContent = user.password;
+                        passwordCell.className = 'status-redacted'; // Apply special styling
+                        row.appendChild(passwordCell);
+                        
+                        // 4. Append the completed row to the table body
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    console.error("Failed to get user data or data format is incorrect.");
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                // Optionally, show an error message in the table
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 2; // Make the cell span both columns
+                cell.textContent = 'Error loading user data. Is the server running?';
+                cell.style.color = 'red';
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+            });
+    </script>
+
+</body>
+</html>
