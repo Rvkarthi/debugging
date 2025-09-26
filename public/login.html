@@ -1,46 +1,143 @@
-<form id="loginForm">
-  <input type="text" id="name" placeholder="username" required>
-  <input type="password" id="password" placeholder="Password" required>
-  <button type="submit">Login</button>
-</form>
-<p id="errorMessage"></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technothirst Debugging Contest - Login</title>
+  <style>
+    /* General Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-<script>
-  const form = document.getElementById('loginForm');
-  const errorMessage = document.getElementById('errorMessage');
+    body {
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault(); // Prevent the form from reloading the page
+    .login-container {
+      background: #fff;
+      padding: 40px 30px;
+      border-radius: 15px;
+      box-shadow: 0px 8px 20px rgba(0,0,0,0.2);
+      width: 350px;
+      text-align: center;
+    }
 
-    
-    const name = document.getElementById('name').value.trim();
-    const password = document.getElementById('password').value;
-    if(name === "admin" && password=== "admin987")
-      window.location.href = '/admin'
+    h1 {
+      font-size: 22px;
+      margin-bottom: 10px;
+      color: #2c3e50;
+      letter-spacing: 1px;
+    }
 
-    else{
-      try {
-      const response = await fetch('/auth/login', { // This calls your API endpoint
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ "username": name, password })
-      });
+    h2 {
+      font-size: 16px;
+      color: #7f8c8d;
+      margin-bottom: 20px;
+    }
 
-      const result = await response.json();
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: 0.3s;
+    }
 
-      if (response.ok) {
-        localStorage.setItem('username', name);
-        // Login successful! Redirect to the quiz page.
-        window.location.href = '/quiz'; // Redirects the browser
+    input:focus {
+      border-color: #3498db;
+      box-shadow: 0px 0px 6px rgba(52, 152, 219, 0.6);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: #3498db;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    #errorMessage {
+      margin-top: 15px;
+      color: red;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #7f8c8d;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Technothirst Debugging Contest</h1>
+    <h2>Login to Continue</h2>
+
+    <form id="loginForm">
+      <input type="text" id="name" placeholder="Username" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p id="errorMessage"></p>
+
+    <div class="footer">© 2025 Technothirst | All Rights Reserved</div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorMessage = document.getElementById('errorMessage');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (name === "admin" && password === "admin987") {
+        window.location.href = '/admin';
       } else {
-        // Show an error message from the server
-        errorMessage.textContent = result.message || 'Login failed!';
+        try {
+          const response = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: name, password })
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            localStorage.setItem('username', name);
+            window.location.href = '/quiz';
+          } else {
+            errorMessage.textContent = result.message || 'Login failed!';
+          }
+        } catch (error) {
+          errorMessage.textContent = 'An error occurred. Please try again.';
+        }
       }
-    } catch (error) {
-      errorMessage.textContent = 'An error occurred. Please try again.';
-    }
-    }
-  });
-</script>
+    });
+  </script>
+</body>
+</html>

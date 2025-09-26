@@ -3,11 +3,15 @@ import { Users } from '../models/loginModel.js'
 // create user
 export const createUser = async (req, res) =>{
     try {
-        const body = req.body;
-        console.log(body)
-        const response = await Users.create(body)
-        console.log("response", response)
-        res.status(200).json({"message": "working", "user created": response})
+        const {username, password} = req.body;
+        const isDuplicate = await Users.findOne({username})
+        if (isDuplicate)
+            res.status(404).json({"message": "username taken", success: false})
+        else
+        {
+            const response = await Users.create({username, password})
+            res.status(200).json({"message": "working", "user created": response, success: true})
+        }
     } catch (error) {
         res.status(404).json({"message": error.message})
     }
