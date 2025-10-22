@@ -13,9 +13,19 @@ export const updateScore = async (req, res) =>{
 }
 
 //get score 
-export const getScore = async (req, res) =>{
+export const getScoreSort = async (req, res) =>{
     try {
         const response = await Users.find().sort({ score: -1 })
+        res.status(200).json({"message": "working", "data": response,"success": "true"})
+    } catch (error) {
+        res.status(404).json({"message": error.message})
+    }
+}
+
+//get score 
+export const getScore = async (req, res) =>{
+    try {
+        const response = await Users.find()
         res.status(200).json({"message": "working", "data": response,"success": "true"})
     } catch (error) {
         res.status(404).json({"message": error.message})
