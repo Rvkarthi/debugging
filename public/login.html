@@ -113,7 +113,7 @@
       event.preventDefault();
 
       const name = document.getElementById('name').value.trim();
-      const password = document.getElementById('password').value;
+      const password = document.getElementById('password').value.trim();
 
       if (name === "admin" && password === "admin987") {
         window.location.href = '/admin';

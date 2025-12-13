@@ -13,8 +13,10 @@ const __filename = fileURLToPath(import.meta.url);
 // Get directory name from file path
 const __dirname = path.dirname(__filename);
 
-const PORT = 2222
+const PORT = 3000
 const app = express()
+
+console.log("working");
 
 // body and cross orgin
 app.use(express.static('public'))
@@ -46,7 +48,7 @@ app.use('/api/questions', questionRoutes);
 
 // test
 app.get("/", (req, res)=>{
-    res.send("working")
+    res.send("server is started working")
 })
 
 if(connectDb())

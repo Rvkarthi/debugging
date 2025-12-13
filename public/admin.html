@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     :root {
       --primary-color: #3498db;
       --danger-color: #e74c3c;
       --edit-color: #f39c12;
+      --dark-bg: #34495e;
     }
     #questionText {
       width: 100%;
@@ -24,6 +26,9 @@
       color: #333;
       margin: 0;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
     h1, h2, h3 {
       color: #2c3e50;
@@ -31,14 +36,16 @@
     }
     main {
       max-width: 900px;
+      width: 100%;
       margin: 20px auto;
       padding: 20px;
       background: #fff;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       border-radius: 8px;
+      flex: 1; /* Pushes footer down */
     }
     nav {
-      background-color: #34495e;
+      background-color: var(--dark-bg);
       padding: 15px;
       text-align: center;
       border-radius: 8px;
@@ -190,6 +197,39 @@
     .tab-btn.active {
       background-color: var(--primary-color);
     }
+
+    /* --- FOOTER STYLES --- */
+    footer {
+      background-color: var(--dark-bg);
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    footer p {
+      margin: 0 0 10px 0;
+      font-size: 0.95em;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .footer-links a {
+      color: white;
+      text-decoration: none;
+      font-size: 1.5em; /* Icon size */
+      transition: color 0.3s transform 0.3s;
+    }
+    .footer-links a:hover {
+      color: var(--primary-color);
+      transform: translateY(-3px);
+    }
   </style>
 </head>
 <body>
@@ -202,7 +242,6 @@
   </nav>
 
   <main>
-    <!-- USERS SECTION -->
     <section id="users-section" class="content-section active">
       <h3>Create New User</h3>
       <form id="createUserForm">
@@ -220,7 +259,6 @@
       </div>
     </section>
 
-    <!-- QUESTIONS SECTION -->
     <section id="questions-section" class="content-section">
       <h3>Add New Quiz Question</h3>
       <form id="addQuestionForm">
@@ -240,7 +278,6 @@
       </div>
     </section>
 
-    <!-- SCOREBOARD SECTION -->
     <section id="scoreboard-section" class="content-section">
       <h2>🏆 Admin Score Leaderboard (Live)</h2>
 
@@ -258,7 +295,21 @@
     </section>
   </main>
 
-  <!-- MODALS -->
+  <footer>
+    <p>Created by <strong>Karthikrishna</strong></p>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/karthikrishnaofficial" target="_blank" title="LinkedIn Profile">
+        <i class="fab fa-linkedin"></i>
+      </a>
+      <a href="mailto:karthikrishna465@gmail.com" title="Send Email">
+        <i class="fas fa-envelope"></i>
+      </a>
+      <a href="tel:+918248612515" title="Call Me">
+        <i class="fas fa-phone"></i>
+      </a>
+    </div>
+  </footer>
+
   <div id="editUserModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" data-modal="editUserModal">&times;</span>
